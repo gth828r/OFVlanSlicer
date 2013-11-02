@@ -3,6 +3,7 @@ import java.util.Set;
 import java.util.TreeSet;
 
 import org.opendaylight.controller.sal.packet.Packet;
+import org.openflow.protocol.OFFlowMod;
 
 /**
  * @author tupty
@@ -29,16 +30,28 @@ public class Slice {
 	}
 	
 	protected void addSlicelet(Slicelet slicelet) {
-		
+		slicelets.add(slicelet);
 	}
 	
-
 	/**
 	 * Check if incoming topology information matches a slicelet in this slice 
      */
-	protected Slicelet getSlicelet(ControllableDevice device, ControllableDevicePort port, Packet packet) {
+	protected Slicelet getSlicelet(ControllableDevice device, Short port, Packet packet) {
 		for (Slicelet slicelet : slicelets) {
 			if (slicelet.matches(device, port, packet)) {
+				return slicelet;
+			}
+		}
+		
+		return null;
+	}
+	
+	/**
+	 * Check if incoming topology information matches a slicelet in this slice 
+     */
+	protected Slicelet getSlicelet(ControllableDevice device, OFFlowMod flowmod) {
+		for (Slicelet slicelet : slicelets) {
+			if (slicelet.matches(device, flowmod)) {
 				return slicelet;
 			}
 		}
