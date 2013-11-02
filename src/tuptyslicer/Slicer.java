@@ -20,8 +20,6 @@ import org.opendaylight.controller.sal.packet.Packet;
  */
 public class Slicer {
 	
-	protected OpenFlowControllerHandler controllerHandler;
-	
 	protected OpenFlowDeviceHandler deviceHandler;
 	
 	//has a set of slices
@@ -47,7 +45,7 @@ public class Slicer {
 		return controllerToSlice.get(controller);
 	}
 	
-	private Slicelet mapDownstreamToSlicelet(Packet packet, ControllableDevice device, ControllableDevicePort port) {
+	private Slicelet mapDownstreamToSlicelet(Packet packet, ControllableDevice device, short port) {
 		for (Slice slice : slices) {
 			
 		}
@@ -84,7 +82,7 @@ public class Slicer {
 	}
 
 	public Slice getSliceFromPacket() {
-		// TODO Auto-generated method stub
+		// TODO Auto-generated method stub 
 		return null;
 	}
 
