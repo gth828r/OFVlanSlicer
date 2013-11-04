@@ -20,7 +20,9 @@ import org.opendaylight.controller.sal.packet.Packet;
  */
 public class Slicer {
 	
-	protected OpenFlowDeviceHandler deviceHandler;
+	protected DeviceConnectionManager deviceConnectionManager;
+	
+	protected ControllerConnectionManager controllerConnectionManager;
 	
 	//has a set of slices
 	protected Set<Slice> slices;
@@ -31,10 +33,10 @@ public class Slicer {
 	//has a map of controller-to-slice
 	protected ConcurrentHashMap<Controller, Slice> controllerToSlice;
 	
-	public Slicer() {
-	
-		
-		slices = new TreeSet<Slice>();
+	public Slicer(DeviceConnectionManager deviceConnectionManager, ControllerConnectionManager controllerConnectionManager) {
+		this.deviceConnectionManager = deviceConnectionManager;
+		this.controllerConnectionManager = controllerConnectionManager;
+		this.slices = new TreeSet<Slice>();
 	}
 	
 	/**
@@ -73,6 +75,7 @@ public class Slicer {
 		
 		if (this.verifyPacketOut(packet, slicelet)) {
 			newPacket = this.virtualizePacketOut(packet, slicelet);
+			
 			
 			// send to ControllableDevice
 		} else {
@@ -146,15 +149,12 @@ public class Slicer {
 		case STATS_REPLY:
 			
 			break;
-		
-		case HELLO:	
-			
-			break;
 			
 		/* Pass all of these messages along without modification */
 		case FEATURES_REPLY:
 		case GET_CONFIG_REPLY:
-		case BARRIER_REPLY:		
+		case BARRIER_REPLY:	
+		case HELLO:	
 		case ECHO_REQUEST:
 		case ECHO_REPLY:
 		case VENDOR:
@@ -211,16 +211,13 @@ public class Slicer {
 			
 			// send newFlowmod to device 
 			break;
-			
-		case HELLO:	
-			
-			break;
-			
+						
 		/* Pass all of these messages along without modification */
 		case STATS_REQUEST:
 		case FEATURES_REQUEST:
 		case GET_CONFIG_REQUEST:
-		case BARRIER_REQUEST:		
+		case BARRIER_REQUEST:
+		case HELLO:
 		case ECHO_REQUEST:
 		case ECHO_REPLY:
 		case VENDOR:

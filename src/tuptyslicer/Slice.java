@@ -59,5 +59,7 @@ public class Slice {
 		return null;
 	}
 	
-	
+	public Controller getController() {
+		return this.controller;
+	}
 }
