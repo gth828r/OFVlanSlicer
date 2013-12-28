@@ -2,8 +2,9 @@ package tuptyslicer;
 import java.util.Set;
 import java.util.TreeSet;
 
-import org.opendaylight.controller.sal.packet.Packet;
 import org.openflow.protocol.OFFlowMod;
+
+import edu.huji.cs.netutils.parse.EthernetFrame;
 
 /**
  * @author tupty
@@ -21,6 +22,8 @@ public class Slice {
 	// Map of device port to slicelet
 	protected Set<Slicelet> slicelets;
 	
+	protected Set<ControllableDevice> devices;
+	
 	//has a flow count
 	protected int flowCount;
 	
@@ -36,9 +39,9 @@ public class Slice {
 	/**
 	 * Check if incoming topology information matches a slicelet in this slice 
      */
-	protected Slicelet getSlicelet(ControllableDevice device, Short port, Packet packet) {
+	protected Slicelet getSlicelet(ControllableDevice device, Short port, EthernetFrame frame) {
 		for (Slicelet slicelet : slicelets) {
-			if (slicelet.matches(device, port, packet)) {
+			if (slicelet.matches(device, port, frame)) {
 				return slicelet;
 			}
 		}
@@ -61,5 +64,9 @@ public class Slice {
 	
 	public Controller getController() {
 		return this.controller;
+	}
+	
+	public Set<ControllableDevice> getDevices() {
+		return this.devices;
 	}
 }

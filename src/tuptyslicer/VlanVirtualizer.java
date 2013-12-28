@@ -1,30 +1,31 @@
 package tuptyslicer;
 
-import org.opendaylight.controller.sal.packet.Packet;
-import org.opendaylight.controller.sal.packet.Ethernet;
-import org.opendaylight.controller.sal.utils.EtherTypes;
-import org.opendaylight.controller.sal.packet.IEEE8021Q;
 import org.openflow.protocol.OFFlowMod;
+import org.openflow.protocol.OFMatch;
+
+import edu.huji.cs.netutils.NetUtilsException;
+import edu.huji.cs.netutils.parse.EthernetFrame;
 
 public class VlanVirtualizer  {
 
-	short vlanId;
+	protected short vlanId;
 	
 	public VlanVirtualizer(short vlanId) {
 		this.vlanId = vlanId;
 	}
 
-	public boolean matches(Packet packet) {
-		// TODO Auto-generated method stub
-		
-		return false;
-	}
-
-	public boolean contains(Packet packet) {
-		if (packet instanceof Ethernet) {
-			short packetEthertype = ((Ethernet) packet).getEtherType();
+	public boolean matches(EthernetFrame frame) throws VirtualizationException {
+		if (this.contains(frame)) {
+			byte[] vlanBytes;
+			try {
+				vlanBytes = EthernetFrame.statGetVlan(frame.getRawBytes());
+			} catch (NetUtilsException e) {
+				// FIXME better logging
+				e.printStackTrace();
+				throw new VirtualizationException();
+			}
 			
-			if (packetEthertype == EtherTypes.VLANTAGGED.shortValue()) {
+			if (vlanBytes.equals(this.vlanIdInBytes())) {
 				return true;
 			}
 		}
@@ -32,48 +33,113 @@ public class VlanVirtualizer  {
 		return false;
 	}
 
-	public Packet insert(Packet packet) {
-		// TODO Auto-generated method stub
-		return packet;
-	}
-
-	public Packet delete(Packet packet) {
-		// TODO Auto-generated method stub
-		return packet;
-	}
-
-	public Packet replace(Packet packet) {
-		//FIXME set this based on discriminant
-		short vid = 0;
-		IEEE8021Q vlanPacket = (IEEE8021Q) packet;
-		vlanPacket.setVid(vid);
+	public boolean contains(EthernetFrame frame) {		
+		int frameEthertype = frame.getPacketType();
 		
-		return (Packet) vlanPacket;
+		if (frameEthertype == EthernetFrame.ETHERNET_OVER_VLAN) {
+			return true;
+		}
+		
+		return false;
+	}
+
+	public EthernetFrame insert(EthernetFrame frame) throws VirtualizationException {
+		try {
+			byte[] rawNewFrame = EthernetFrame.statAddVlan(frame.getRawBytes(), this.vlanIdInBytes());
+			return new EthernetFrame(rawNewFrame);
+		} catch (NetUtilsException e) {
+			// FIXME better logging
+			e.printStackTrace();
+			throw new VirtualizationException();
+		}
+	}
+
+	public EthernetFrame delete(EthernetFrame frame) throws VirtualizationException {
+		try {
+			byte[] rawNewFrame = EthernetFrame.statStripVlan(frame.getRawBytes());
+			return new EthernetFrame(rawNewFrame);
+		} catch (NetUtilsException e) {
+			// FIXME better logging
+			e.printStackTrace();
+			throw new VirtualizationException();
+		}
+	}
+
+	public EthernetFrame replace(EthernetFrame frame) throws VirtualizationException {
+		EthernetFrame frameNoVlan = this.delete(frame);
+		EthernetFrame newFrame = this.insert(frameNoVlan);
+		
+		return newFrame;
 	}
 
 	public boolean matches(OFFlowMod flowmod) {
-		// TODO Auto-generated method stub
+		if (this.contains(flowmod)) {
+			OFMatch match = flowmod.getMatch();
+			if (match.getDataLayerVirtualLan() == vlanId) {
+				return true;
+			}
+		}
+		
 		return false;
 	}
 
 	public boolean contains(OFFlowMod flowmod) {
-		// TODO Auto-generated method stub
+		OFMatch match = flowmod.getMatch();
+		if ((match.getWildcards() & OFMatch.OFPFW_DL_VLAN) != OFMatch.OFPFW_DL_VLAN) {
+			return true;
+		}		 
+		
 		return false;
 	}
 
 	public OFFlowMod insert(OFFlowMod flowmod) {
-		// TODO Auto-generated method stub
-		return null;
+		OFMatch match = flowmod.getMatch();
+		OFMatch newMatch;
+		OFFlowMod newFlowmod;
+		
+		// Set the VLAN ID
+		newMatch = match.setDataLayerVirtualLan(vlanId);
+		
+		// Set the wildcard bits
+		newMatch = newMatch.setWildcards(match.getWildcards() | OFMatch.OFPFW_DL_VLAN);
+		
+		// Update the flowmod
+		newFlowmod = flowmod.setMatch(newMatch);
+		
+		return newFlowmod;
 	}
 
 	public OFFlowMod delete(OFFlowMod flowmod) {
-		// TODO Auto-generated method stub
-		return null;
+		OFMatch match = flowmod.getMatch();
+		OFMatch newMatch;
+		OFFlowMod newFlowmod;
+		
+		// Set the VLAN ID to 0
+		// FIXME: make sure 0 is the right number to use here
+		newMatch = match.setDataLayerVirtualLan((short) 0);
+		
+		// Set the wildcard bits
+		newMatch = newMatch.setWildcards(match.getWildcards() & (~OFMatch.OFPFW_DL_VLAN));
+		
+		// Update the flowmod
+		newFlowmod = flowmod.setMatch(newMatch);
+		
+		return newFlowmod;
 	}
 
 	public OFFlowMod replace(OFFlowMod flowmod) {
-		// TODO Auto-generated method stub
-		return null;
+		// Delete and insert
+		OFFlowMod newFlowmod = this.delete(flowmod);
+		newFlowmod = this.insert(newFlowmod);
+		
+		return newFlowmod;
+	}
+	
+	public short getVlanId() {
+		return vlanId;
 	}
 
+	private byte[] vlanIdInBytes() {
+		return new byte[] {(byte) (vlanId & 0xFF), (byte) (vlanId >>> 8)};
+	}
 }

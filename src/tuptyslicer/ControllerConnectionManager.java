@@ -1,37 +1,64 @@
 package tuptyslicer;
 
-import java.nio.channels.SocketChannel;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.openflow.protocol.factory.OFMessageFactory;
+import org.openflow.protocol.OFMessage;
+import org.openflow.protocol.factory.BasicFactory;
 
 public class ControllerConnectionManager {
 
-	// each slice has a controller connection
-	protected ConcurrentHashMap<Slice, OFConnection> connections;
-	
-	protected ConcurrentHashMap<OFConnection, Slice> slices;
+	protected ConcurrentHashMap<ConnectionManagerKey, OFConnection> connections;
+	protected ConcurrentHashMap<OFConnection, ConnectionManagerKey> connectionManagerKeys;
+	protected Slicer slicer;
 
 	public ControllerConnectionManager() {
-		connections = new ConcurrentHashMap<Slice, OFConnection>();
-		slices = new ConcurrentHashMap<OFConnection, Slice>();
+		connections = new ConcurrentHashMap<ConnectionManagerKey, OFConnection>();
+		connectionManagerKeys = new ConcurrentHashMap<OFConnection, ConnectionManagerKey>();
 	}
 	
-	public void createConnection(Slice slice) {
-		//FIXME implement this
-		//OFConnection connection = new OFConnection(slice.getController(), new OFMessageFactory());
+	public void setSlicer(Slicer slicer) {
+		this.slicer = slicer;
 	}
 	
-	public void deleteConnection(Slice slice) {
-		OFConnection connection = this.getConnection(slice);
-		
-		//FIXME close connection?
-		connections.remove(slice);
-		slices.remove(connection);
-		connection.close();
+	// FIXME: this approach is naive and messy, but get something working for now
+	public void readAll() {
+		for (OFConnection connection : connectionManagerKeys.keySet()) {
+			List<OFMessage> messages = connection.receive();
+			
+			if (messages != null && messages.size() > 0) {
+				ConnectionManagerKey key = connectionManagerKeys.get(connection);
+				Controller controller = key.getController();
+				ControllableDevice device = key.getDevice();
+				
+				for (OFMessage message : messages) {
+					slicer.handlePacketFromController(message, controller, device);
+				}
+			}
+		}
 	}
 	
-	public OFConnection getConnection(Slice slice) {
-		return connections.get(slice);
+	public void createConnections(Slice slice) {
+		for (ControllableDevice device : slice.getDevices()) {
+			ConnectionManagerKey key = new ConnectionManagerKey(slice, slice.getController(), device);
+			OFConnection connection = new OFConnection(slice.getController(), new BasicFactory());
+			connections.put(key, connection);
+			connectionManagerKeys.put(connection, key);
+		}
+	}
+	
+	public void deleteConnections(Slice slice) {
+		for (ControllableDevice device : slice.getDevices()) {
+			ConnectionManagerKey key = new ConnectionManagerKey(slice, slice.getController(), device);
+			OFConnection connection = this.getConnection(slice, device);
+			connections.remove(key);
+			connectionManagerKeys.remove(connection);
+			connection.close();
+		}
+	}
+	
+	public OFConnection getConnection(Slice slice, ControllableDevice device) {
+		ConnectionManagerKey key = new ConnectionManagerKey(slice, slice.getController(), device);
+		return connections.get(key);
 	}
 }

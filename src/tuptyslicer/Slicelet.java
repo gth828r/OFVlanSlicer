@@ -2,8 +2,9 @@ package tuptyslicer;
 
 import java.util.Set;
 
-import org.opendaylight.controller.sal.packet.Packet;
 import org.openflow.protocol.OFFlowMod;
+
+import edu.huji.cs.netutils.parse.EthernetFrame;
 
 public class Slicelet {
 
@@ -27,10 +28,15 @@ public class Slicelet {
 		this.virtualizer = new VlanVirtualizer(vlanId);
 	}
 	
-	public boolean matches(ControllableDevice device, Short port, Packet packet) {
+	public boolean matches(ControllableDevice device, Short port, EthernetFrame frame) {
 		if (this.containsPort(device, port)) {
-			if (virtualizer.matches(packet)) {
-				return true;
+			try {
+				if (virtualizer.matches(frame)) {
+					return true;
+				}
+			} catch (VirtualizationException e) {
+				// FIXME do logging
+				e.printStackTrace();
 			}
 		}
 		
@@ -66,5 +72,9 @@ public class Slicelet {
 	
 	public VlanVirtualizer getVlanVirtualizer() {
 		return virtualizer;
+	}
+	
+	public ControllableDevice getDevice() {
+		return this.device;
 	}
 }

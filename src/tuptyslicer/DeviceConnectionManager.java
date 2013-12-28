@@ -4,7 +4,10 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
+
+import org.openflow.protocol.OFMessage;
 
 public class DeviceConnectionManager {
 
@@ -18,6 +21,8 @@ public class DeviceConnectionManager {
 	protected ConcurrentHashMap<ControllableDevice, OFConnection> connections;
 	
 	protected ConcurrentHashMap<OFConnection, ControllableDevice> devices;
+	
+	protected Slicer slicer;
 
 	public DeviceConnectionManager(short serverPort) {
 		this.serverPort = serverPort;
@@ -25,6 +30,26 @@ public class DeviceConnectionManager {
 		this.devices = new ConcurrentHashMap<OFConnection, ControllableDevice>();
 		this.listenForConnections();
 	}
+	
+	public void setSlicer(Slicer slicer) {
+		this.slicer = slicer;
+	}
+	
+	// FIXME: this approach is naive and messy, but get something working for now
+	public void readAll() {
+		for (OFConnection connection : devices.keySet()) {
+			List<OFMessage> messages = connection.receive();
+			
+			if (messages != null && messages.size() > 0) {
+				ControllableDevice device = devices.get(connection);
+				
+				for (OFMessage message : messages) {
+					slicer.handlePacketFromSwitch(message, device);
+				}
+			}
+		}
+	}
+	
 	
 	protected void listenForConnections() {
 		ServerSocketChannel serverSocketChannel;

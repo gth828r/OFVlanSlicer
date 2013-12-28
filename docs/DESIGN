@@ -1,0 +1,48 @@
+A slice belongs to a single controller connection, and thus to a single user.
+
+A VLAN on a device always belongs to a single slice.
+
+A single slice can own multiple VLANs on a device.
+
+
+
+These situations are both OK:
+
+=======================================================
+VLAN X on gi0/1 owned by slice 1
+VLAN X on gi0/2 owned by slice 1
+
+-----VLAN X-----(gi0/1[switch 1]gi0/2)-----VLAN X-----
+
+This represents a single slicelet on a device in a 
+single slice
+=======================================================
+
+=======================================================
+VLAN X on gi0/1 owned by slice 1
+VLAN Y on gi0/2 owned by slice 1
+
+-----VLAN X-----(gi0/1[switch 1]gi0/2)-----VLAN Y-----
+
+This represents multiple slicelets on a device in a
+single slice
+=======================================================
+
+
+
+This situation is NOT OK with this code:
+
+=======================================================
+VLAN X on gi0/1 owned by slice 1
+VLAN X on gi0/2 owned by slice 2
+
+-----VLAN X-----(gi0/1[switch 1]gi0/2)-----VLAN X-----
+
+This represents two slices, each with a single slicelet
+on a single device, and both using the same VLAN ID
+=======================================================
+
+
+While this situation may have some value, it makes the
+code significantly more complicated, and if human debugging
+were ever required, it would make things pretty complicated.
