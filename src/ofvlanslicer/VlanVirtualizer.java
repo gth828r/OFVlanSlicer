@@ -1,5 +1,7 @@
 package ofvlanslicer;
 
+import java.util.logging.Logger;
+
 import org.openflow.protocol.OFFlowMod;
 import org.openflow.protocol.OFMatch;
 
@@ -8,6 +10,9 @@ import edu.huji.cs.netutils.parse.EthernetFrame;
 
 public class VlanVirtualizer  {
 
+	private static final Logger LOGGER = Logger.getLogger(
+		    Thread.currentThread().getStackTrace()[0].getClassName() );
+	
 	protected short vlanId;
 	
 	public VlanVirtualizer(short vlanId) {

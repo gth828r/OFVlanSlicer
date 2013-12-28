@@ -2,12 +2,16 @@ package ofvlanslicer;
 
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.logging.Logger;
 
 import org.openflow.protocol.OFMessage;
 import org.openflow.protocol.factory.BasicFactory;
 
 public class ControllerConnectionManager {
 
+	private static final Logger LOGGER = Logger.getLogger(
+		    Thread.currentThread().getStackTrace()[0].getClassName() );
+	
 	protected ConcurrentHashMap<ConnectionManagerKey, OFConnection> connections;
 	protected ConcurrentHashMap<OFConnection, ConnectionManagerKey> connectionManagerKeys;
 	protected Slicer slicer;

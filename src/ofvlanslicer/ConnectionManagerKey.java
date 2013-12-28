@@ -1,7 +1,12 @@
 package ofvlanslicer;
 
+import java.util.logging.Logger;
+
 public class ConnectionManagerKey {
 
+	private static final Logger LOGGER = Logger.getLogger(
+		    Thread.currentThread().getStackTrace()[0].getClassName() );
+	
 	protected Slice slice;
 	
 	protected Controller controller;

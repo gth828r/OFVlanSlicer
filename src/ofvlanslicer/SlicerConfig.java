@@ -1,9 +1,13 @@
 package ofvlanslicer;
 
 import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class SlicerConfig {
 
+	private static final Logger LOGGER = Logger.getLogger(
+		    Thread.currentThread().getStackTrace()[0].getClassName() );
+	
 	private static final boolean DEFAULT_UNKNOWN_MSG_STRICT = true;
 	
 	private static final Level DEFAULT_LOG_LEVEL = Level.WARNING;

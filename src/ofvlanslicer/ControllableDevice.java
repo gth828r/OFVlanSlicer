@@ -1,9 +1,13 @@
 package ofvlanslicer;
 
 import java.util.Set;
+import java.util.logging.Logger;
 
 public class ControllableDevice {
 
+	private static final Logger LOGGER = Logger.getLogger(
+		    Thread.currentThread().getStackTrace()[0].getClassName() );
+	
 	protected String id;
 
 	protected String hostname;

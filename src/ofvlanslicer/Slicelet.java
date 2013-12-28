@@ -1,6 +1,7 @@
 package ofvlanslicer;
 
 import java.util.Set;
+import java.util.logging.Logger;
 
 import org.openflow.protocol.OFFlowMod;
 
@@ -8,6 +9,9 @@ import edu.huji.cs.netutils.parse.EthernetFrame;
 
 public class Slicelet {
 
+	private static final Logger LOGGER = Logger.getLogger(
+		    Thread.currentThread().getStackTrace()[0].getClassName() );
+	
 	/** Discriminant associated with this slicelet */
 	protected VlanVirtualizer virtualizer;
 	

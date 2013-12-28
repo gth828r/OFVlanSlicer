@@ -12,6 +12,9 @@ import org.openflow.protocol.factory.OFMessageFactory;
 
 public class OFConnection {
 	
+	private static final Logger LOGGER = Logger.getLogger(
+		    Thread.currentThread().getStackTrace()[0].getClassName() );
+	
 	/** OF message stream for this connection */
 	protected OFMessageAsyncStream connection;
 	

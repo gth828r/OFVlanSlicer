@@ -1,7 +1,12 @@
 package ofvlanslicer;
 
+import java.util.logging.Logger;
+
 public class VirtualizationException extends Exception {
 
+	private static final Logger LOGGER = Logger.getLogger(
+		    Thread.currentThread().getStackTrace()[0].getClassName() );
+	
 	/**
 	 * 
 	 */
