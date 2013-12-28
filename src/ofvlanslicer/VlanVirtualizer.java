@@ -1,4 +1,4 @@
-package tuptyslicer;
+package ofvlanslicer;
 
 import org.openflow.protocol.OFFlowMod;
 import org.openflow.protocol.OFMatch;

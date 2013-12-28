@@ -1,4 +1,4 @@
-package tuptyslicer;
+package ofvlanslicer;
 
 public class VirtualizationException extends Exception {
 

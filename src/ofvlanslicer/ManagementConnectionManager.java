@@ -1,4 +1,4 @@
-package tuptyslicer;
+package ofvlanslicer;
 
 import javax.ws.rs.GET;
 

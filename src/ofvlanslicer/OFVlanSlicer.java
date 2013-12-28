@@ -1,6 +1,6 @@
-package tuptyslicer;
+package ofvlanslicer;
 
-public class TuptySlicer {
+public class OFVlanSlicer {
 
 	/**
 	 * @param args
