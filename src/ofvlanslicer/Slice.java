@@ -34,6 +34,7 @@ public class Slice {
 	public Slice(Controller controller) {
 		this.controller = controller;
 		this.slicelets = new TreeSet<Slicelet>();
+		LOGGER.finest("Creating slice for controller " + controller);
 	}
 	
 	protected void addSlicelet(Slicelet slicelet) {

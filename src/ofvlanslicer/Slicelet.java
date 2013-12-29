@@ -39,8 +39,9 @@ public class Slicelet {
 					return true;
 				}
 			} catch (VirtualizationException e) {
-				// FIXME do logging
 				e.printStackTrace();
+				LOGGER.warning(e.getMessage());
+				LOGGER.warning(e.getStackTrace().toString());
 			}
 		}
 		

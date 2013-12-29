@@ -85,6 +85,8 @@ public class DeviceConnectionManager {
 		//OFConnection connection = new OFConnection(socket, new OFMessageFactory());
 		//connections.put(device, connection);
 		//devices.put(connection, device);
+		
+		LOGGER.info("Creating connection for device " + device);
 	}
 	
 	public void deleteConnection(ControllableDevice device) {
@@ -94,6 +96,8 @@ public class DeviceConnectionManager {
 		connections.remove(device);
 		devices.remove(connection);
 		connection.close();
+		
+		LOGGER.info("Deleting connection for device " + device);
 	}
 	
 	public OFConnection getConnection(ControllableDevice device) {

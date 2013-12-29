@@ -49,6 +49,8 @@ public class ControllerConnectionManager {
 			connections.put(key, connection);
 			connectionManagerKeys.put(connection, key);
 		}
+		
+		LOGGER.info("Created connections for slice " + slice);
 	}
 	
 	public void deleteConnections(Slice slice) {
@@ -59,6 +61,8 @@ public class ControllerConnectionManager {
 			connectionManagerKeys.remove(connection);
 			connection.close();
 		}
+		
+		LOGGER.info("Deleted connections for slice " + slice);
 	}
 	
 	public OFConnection getConnection(Slice slice, ControllableDevice device) {

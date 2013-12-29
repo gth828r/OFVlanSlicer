@@ -303,10 +303,10 @@ public class Slicer {
 	
 	private void virtualizeAndSendPacketIn(OFPacketIn pktIn, ControllableDevice device, short inPort) {
 		
-		EthernetFrame frame = new EthernetFrame(pktIn.getPacketData());
+		//EthernetFrame frame = new EthernetFrame(pktIn.getPacketData());
 		
 		// FIXME: Jump straight to slicelet
-		Slicelet slicelet = this.getSliceletFromPacket(frame, device, inPort);
+		//Slicelet slicelet = this.getSliceletFromPacket(frame, device, inPort);
 		
 		// Modify packet for controller
 		

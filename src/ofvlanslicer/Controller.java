@@ -14,6 +14,7 @@ public class Controller {
 	public Controller(String hostname, int port) {
 		this.hostname = hostname;
 		this.port = port;
+		LOGGER.finest("Creating controller with host " + hostname + ", port " + port);
 	}
 	
 	public String getHostname() {
