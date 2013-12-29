@@ -1,5 +1,6 @@
 package ofvlanslicer;
 
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.openflow.protocol.OFFlowMod;
@@ -25,8 +26,8 @@ public class VlanVirtualizer  {
 			try {
 				vlanBytes = EthernetFrame.statGetVlan(frame.getRawBytes());
 			} catch (NetUtilsException e) {
-				// FIXME better logging
-				e.printStackTrace();
+				LOGGER.log(Level.WARNING, e.getMessage());
+				LOGGER.log(Level.WARNING, e.getStackTrace().toString());
 				throw new VirtualizationException();
 			}
 			
@@ -53,8 +54,8 @@ public class VlanVirtualizer  {
 			byte[] rawNewFrame = EthernetFrame.statAddVlan(frame.getRawBytes(), this.vlanIdInBytes());
 			return new EthernetFrame(rawNewFrame);
 		} catch (NetUtilsException e) {
-			// FIXME better logging
-			e.printStackTrace();
+			LOGGER.log(Level.WARNING, e.getMessage());
+			LOGGER.log(Level.WARNING, e.getStackTrace().toString());
 			throw new VirtualizationException();
 		}
 	}
@@ -64,8 +65,8 @@ public class VlanVirtualizer  {
 			byte[] rawNewFrame = EthernetFrame.statStripVlan(frame.getRawBytes());
 			return new EthernetFrame(rawNewFrame);
 		} catch (NetUtilsException e) {
-			// FIXME better logging
-			e.printStackTrace();
+			LOGGER.log(Level.WARNING, e.getMessage());
+			LOGGER.log(Level.WARNING, e.getStackTrace().toString());
 			throw new VirtualizationException();
 		}
 	}

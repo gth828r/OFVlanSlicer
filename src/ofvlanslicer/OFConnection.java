@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.channels.SocketChannel;
 import java.util.List;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.openflow.io.OFMessageAsyncStream;
@@ -33,8 +34,8 @@ public class OFConnection {
 			socket.connect(new InetSocketAddress(controller.getHostname(), controller.getPort()));
 			connection = new OFMessageAsyncStream(socket, factory);
 		} catch (IOException e) {
-			// FIXME do logging
-			e.printStackTrace();
+			LOGGER.log(Level.WARNING, e.getMessage());
+			LOGGER.log(Level.WARNING, e.getStackTrace().toString());
 		}
 	}
 	
@@ -49,8 +50,8 @@ public class OFConnection {
 			socket = SocketChannel.open();
 			connection = new OFMessageAsyncStream(socket, factory);
 		} catch (IOException e) {
-			// FIXME do logging
-			e.printStackTrace();
+			LOGGER.log(Level.WARNING, e.getMessage());
+			LOGGER.log(Level.WARNING, e.getStackTrace().toString());
 		}
 	}
 	
@@ -58,8 +59,8 @@ public class OFConnection {
 		try {
 			connection.write(message);
 		} catch (IOException e) {
-			// FIXME do logging
-			e.printStackTrace();
+			LOGGER.log(Level.WARNING, e.getMessage());
+			LOGGER.log(Level.WARNING, e.getStackTrace().toString());
 		}
 	}
 
@@ -69,8 +70,8 @@ public class OFConnection {
 		try {
 			messages = connection.read();
 		} catch (IOException e) {
-			// FIXME do logging
-			e.printStackTrace();
+			LOGGER.log(Level.WARNING, e.getMessage());
+			LOGGER.log(Level.WARNING, e.getStackTrace().toString());
 			return null;
 		}
 		
@@ -81,8 +82,8 @@ public class OFConnection {
 		try {
 			socket.close();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			LOGGER.log(Level.WARNING, e.getMessage());
+			LOGGER.log(Level.WARNING, e.getStackTrace().toString());
 		}
 	}
 }

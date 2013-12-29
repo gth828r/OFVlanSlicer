@@ -24,6 +24,8 @@ public class SlicerConfig {
 		unknownMsgStrict = DEFAULT_UNKNOWN_MSG_STRICT;
 		logLevel = DEFAULT_LOG_LEVEL;
 		serverListenerPort = DEFAULT_SERVER_LISTENER_PORT;
+		
+		LOGGER.log(Level.FINEST, "Initializing config with defaults");
 	}
 	
 	public SlicerConfig (String configFilePath) {

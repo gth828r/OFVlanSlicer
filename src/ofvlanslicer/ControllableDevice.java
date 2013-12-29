@@ -1,6 +1,7 @@
 package ofvlanslicer;
 
 import java.util.Set;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class ControllableDevice {
@@ -20,6 +21,9 @@ public class ControllableDevice {
 	public ControllableDevice(String hostname, int controlPort) {
 		this.hostname = hostname;
 		this.controlPort = controlPort;
+		
+		String msg = "Creating new controllable device with host " + hostname + ", port " + controlPort;
+		LOGGER.log(Level.FINEST, msg);
 	}
 	
 	protected void setId(String id) {

@@ -1,5 +1,6 @@
 package ofvlanslicer;
 
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class OFVlanSlicer {
@@ -24,6 +25,8 @@ public class OFVlanSlicer {
 	}
 	
 	private static void runUnitTests(Slicer slicer, ControllerConnectionManager controllerManager, DeviceConnectionManager deviceManager) {
+		
+		LOGGER.log(Level.ALL, "Beginning unit test");
 		
 		//Slice slice = new Slice();
 		
