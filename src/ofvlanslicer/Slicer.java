@@ -39,6 +39,8 @@ public class Slicer {
 	//has a map of slicelet-to-Slice
 	protected ConcurrentHashMap<Slicelet, Slice> sliceletToSlice;
 	
+	protected ConcurrentHashMap<VlanOnDevice, Slice> vlanOnDeviceToSlice;
+	
 	//has a map of controller-to-slice
 	protected ConcurrentHashMap<Controller, Slice> controllerToSlice;
 	
@@ -59,13 +61,8 @@ public class Slicer {
 		return controllerToSlice.get(controller);
 	}
 	
-	private Slicelet mapDownstreamToSlicelet(EthernetFrame frame, ControllableDevice device, short port) {
-		for (Slice slice : slices) {
-			
-		}
-		
-		//FIXME implement this
-		return null;
+	public Slice getSliceFromVlanOnDevice(int vlanId, ControllableDevice device) {
+		return vlanOnDeviceToSlice.get(new VlanOnDevice(vlanId, device));
 	}
 	
 	public EthernetFrame virtualizePacketOut(EthernetFrame frame, Slicelet slicelet) {
@@ -197,7 +194,7 @@ public class Slicer {
 			OFConnection connection = deviceConnectionManager.getConnection(slicelet.getDevice());
 			connection.send(newFlowmod);
 		} else {
-			//log error
+			//FIXME: log error
 		}
 	}
 	
@@ -301,12 +298,11 @@ public class Slicer {
 		}
 	}
 	
-	private void virtualizeAndSendPacketIn(OFPacketIn pktIn, ControllableDevice device, short inPort) {
+	private void virtualizeAndSendPacketIn(OFPacketIn pktIn, ControllableDevice device) {
 		
-		//EthernetFrame frame = new EthernetFrame(pktIn.getPacketData());
+		EthernetFrame frame = new EthernetFrame(pktIn.getPacketData());
 		
-		// FIXME: Jump straight to slicelet
-		//Slicelet slicelet = this.getSliceletFromPacket(frame, device, inPort);
+		Slice slice = this.getSliceFromVlanOnDevice(this.getVlanId(frame), device);
 		
 		// Modify packet for controller
 		
@@ -322,8 +318,7 @@ public class Slicer {
 		case PACKET_IN:
 			//FIXME there is probably a better way to do this instead of casting
 			OFPacketIn pktIn = (OFPacketIn) ofmessage;
-			short inPort = pktIn.getInPort();
-			this.virtualizeAndSendPacketIn(pktIn, device, inPort);
+			this.virtualizeAndSendPacketIn(pktIn, device);
 			break;
 			// Slice by packet VLAN ID
 			
@@ -365,15 +360,9 @@ public class Slicer {
 	
 		// Reply to an echo request from a controller with an echo reply
 		case ECHO_REQUEST:
-			// FIXME: get the correct connection
-			
-			// First, reply to the switch
-			//Slice echoRequestSlice = this.getSliceFromController(controller);
 			OFEchoReply echoReply = new OFEchoReply();
-			//OFConnection echoReplyConnection = controllerConnectionManager.getConnection(echoRequestSlice, device);
-			//echoReplyConnection.send(echoReply);
-			
-			// Then send an echo request to the controllers that connect to this device
+			OFConnection echoReplyConnection = deviceConnectionManager.getConnection(device);
+			echoReplyConnection.send(echoReply);
 			
 			break;
 	
@@ -386,8 +375,8 @@ public class Slicer {
 		// FIXME better error handling here
 		try {
 			byte[] vlanIdBytes = EthernetFrame.statGetVlan(frame.getRawBytes());
-			int vlanId = ((int) vlanIdBytes[1]) << 8 | (int) vlanIdBytes[0];
-			return vlanId;
+			int vlanId = (vlanIdBytes[1] << 8) | (vlanIdBytes[0]);
+			return vlanId; 
 		} catch (NetUtilsException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

@@ -8,4 +8,8 @@ public class XidTracker {
 		    Thread.currentThread().getStackTrace()[0].getClassName() );
 	
 	//protected ConcurrentHashmap<Long, Slice>
+	
+	public XidTracker() {
+		LOGGER.finest("Creating new XID tracker");
+	}
 }
