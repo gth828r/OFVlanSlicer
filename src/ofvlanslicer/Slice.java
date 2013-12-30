@@ -74,4 +74,8 @@ public class Slice {
 	public Set<ControllableDevice> getDevices() {
 		return this.devices;
 	}
+	
+	public Set<Slicelet> getSlicelets() {
+		return this.slicelets;
+	}
 }

@@ -46,3 +46,10 @@ on a single device, and both using the same VLAN ID
 While this situation may have some value, it makes the
 code significantly more complicated, and if human debugging
 were ever required, it would make things pretty complicated.
+
+
+Need to rework slicelet, perhaps merge with VlanOnDevice somehow.
+
+If a single slice contains a device port with mutliple VLAN IDs, don't
+strip the VLAN ID on packet in, and require a controller-specified VLAN ID
+on packet-out or flowmod.

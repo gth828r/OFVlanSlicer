@@ -1,5 +1,7 @@
 package ofvlanslicer;
 
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -28,7 +30,18 @@ public class OFVlanSlicer {
 		
 		LOGGER.log(Level.ALL, "Beginning unit test");
 		
-		//Slice slice = new Slice();
+		Controller controller = new Controller("localhost", 6654);
+		Slice slice = new Slice(controller);
+		ControllableDevice device = new ControllableDevice("localhost", 123);
+		short vlanId = 10;
+		Set<Short> ports = new TreeSet<Short>();
+		ports.add((short) 1);
+		ports.add((short) 2);
+		
+		Slicelet slicelet = new Slicelet(slice, vlanId, device, ports);
+		slice.addSlicelet(slicelet);
+		
+		slicer.addSlice(slice);
 		
 		//FIXME: this is a hack to get things working
 		while (true) {

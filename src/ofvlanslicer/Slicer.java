@@ -36,9 +36,6 @@ public class Slicer {
 	//has a set of slices
 	protected Set<Slice> slices;
 	
-	//has a map of slicelet-to-Slice
-	protected ConcurrentHashMap<Slicelet, Slice> sliceletToSlice;
-	
 	protected ConcurrentHashMap<VlanOnDevice, Slice> vlanOnDeviceToSlice;
 	
 	//has a map of controller-to-slice
@@ -51,6 +48,18 @@ public class Slicer {
 		this.controllerConnectionManager = controllerConnectionManager;
 		this.slices = new TreeSet<Slice>();
 		this.config = config;
+	}
+	
+	public void addSlice(Slice slice) {
+		controllerToSlice.put(slice.getController(), slice);
+		
+		for (Slicelet slicelet : slice.getSlicelets()) {
+			int vlanId = slicelet.getVlanVirtualizer().getVlanId();
+			ControllableDevice device = slicelet.getDevice();
+			VlanOnDevice vod = new VlanOnDevice(vlanId, device);
+			
+			vlanOnDeviceToSlice.put(vod, slice);
+		}
 	}
 	
 	/**
@@ -113,11 +122,6 @@ public class Slicer {
 				return false;
 			}
 		}
-	}
-
-	public Slice slicePacketIn(EthernetFrame frame, Slicelet slicelet) {
-		//FIXME not really implemented
-		return sliceletToSlice.get(slicelet);
 	}
 
 	public OFFlowMod virtualizeFlowmod(OFFlowMod flowmod, Slicelet slicelet) {
