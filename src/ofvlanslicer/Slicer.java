@@ -304,6 +304,9 @@ public class Slicer {
 		
 		Slice slice = this.getSliceFromVlanOnDevice(this.getVlanId(frame), device);
 		
+		//FIXME: this is just temporary to get rid of warning
+		slice.equals(null);
+		
 		// Modify packet for controller
 		
 		// Create new packet in from new packet
