@@ -47,7 +47,7 @@ public class OFConnection {
 	 */
 	public OFConnection(SocketChannel socket, OFMessageFactory factory) {
 		try {
-			socket = SocketChannel.open();
+			//socket = SocketChannel.open();
 			connection = new OFMessageAsyncStream(socket, factory);
 		} catch (IOException e) {
 			LOGGER.log(Level.WARNING, e.getMessage());

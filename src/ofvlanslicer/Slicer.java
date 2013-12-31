@@ -1,8 +1,8 @@
 package ofvlanslicer;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
 
@@ -46,7 +46,11 @@ public class Slicer {
 	public Slicer(DeviceConnectionManager deviceConnectionManager, ControllerConnectionManager controllerConnectionManager, SlicerConfig config) {
 		this.deviceConnectionManager = deviceConnectionManager;
 		this.controllerConnectionManager = controllerConnectionManager;
-		this.slices = new TreeSet<Slice>();
+		
+		this.vlanOnDeviceToSlice = new ConcurrentHashMap<VlanOnDevice, Slice>();
+		this.controllerToSlice = new ConcurrentHashMap<Controller, Slice>();
+		
+		this.slices = new HashSet<Slice>();
 		this.config = config;
 	}
 	
@@ -90,6 +94,23 @@ public class Slicer {
 		
 		return newFrame;
 	}
+	
+	public EthernetFrame virtualizePacketIn(EthernetFrame frame, Slicelet slicelet) {
+		EthernetFrame newFrame = frame;
+		VlanVirtualizer virtualizer = slicelet.getVlanVirtualizer();
+		
+		if (virtualizer.contains(frame)) {
+			try {
+				newFrame = virtualizer.delete(frame);
+			} catch (VirtualizationException e) {
+				// Could not virtualize packet for some reason
+				// log and continue
+				LOGGER.warning(e.getMessage());
+			}
+		}
+		
+		return newFrame;
+	}
 
 	public Slicelet getSliceletFromPacket(EthernetFrame frame, ControllableDevice device, short port) {
 		
@@ -122,6 +143,10 @@ public class Slicer {
 				return false;
 			}
 		}
+	}
+	
+	public boolean verifyPacketIn(EthernetFrame frame, Slicelet slicelet, ControllableDevice device, short port) {
+		return slicelet.matches(device, port, frame);
 	}
 
 	public OFFlowMod virtualizeFlowmod(OFFlowMod flowmod, Slicelet slicelet) {
@@ -235,9 +260,7 @@ public class Slicer {
 			OFConnection connection = deviceConnectionManager.getConnection(slicelet.getDevice());
 			connection.send(newPktOut);
 		} else {
-			// FIXME set vlanId correctly using \
-			// EthernetFrame.statGetVlan(frame.getRawBytes())
-			int vlanId = 0;
+			int vlanId = this.getVlanId(frame);
 			LOGGER.warning("Frame has VLAN ID " + vlanId + " but slice needs " + slicelet.getVlanVirtualizer().getVlanId()); 
 		}
 	}
@@ -311,6 +334,27 @@ public class Slicer {
 		//FIXME: this is just temporary to get rid of warning
 		slice.equals(null);
 		
+		Slicelet slicelet = slice.getSlicelet(device, pktIn.getInPort(), frame);
+		
+		// Ensure that this slice includes a slicelet with this in port before sending along
+		if (slicelet != null) {
+			EthernetFrame newFrame = this.virtualizePacketIn(frame, slicelet);
+			OFPacketIn newPktIn = pktIn;
+			try {
+				newPktIn.setPacketData(newFrame.getRawBytes());
+			} catch (NetUtilsException e) {
+				// I don't know what can happen here, so log it as a warning
+				LOGGER.warning(e.getMessage());
+			}
+			
+			// send newPacketOut to device 
+			OFConnection connection = controllerConnectionManager.getConnection(slice, device);
+			connection.send(newPktIn);
+		} else {
+			int vlanId = this.getVlanId(frame);
+			LOGGER.warning("Frame has VLAN ID " + vlanId + " on port " + pktIn.getInPort() + ", but slice doesn't include that VLAN on that port."); 
+		}
+		
 		// Modify packet for controller
 		
 		// Create new packet in from new packet
@@ -323,11 +367,11 @@ public class Slicer {
 		switch (ofmessage.getType()) {
 		
 		case PACKET_IN:
+			LOGGER.fine("Got packet-in message from device " + device);
 			//FIXME there is probably a better way to do this instead of casting
 			OFPacketIn pktIn = (OFPacketIn) ofmessage;
 			this.virtualizeAndSendPacketIn(pktIn, device);
 			break;
-			// Slice by packet VLAN ID
 			
 		case FLOW_REMOVED:
 			// Slice by match space

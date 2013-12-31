@@ -1,6 +1,6 @@
 package ofvlanslicer;
+import java.util.HashSet;
 import java.util.Set;
-import java.util.TreeSet;
 import java.util.logging.Logger;
 
 import org.openflow.protocol.OFFlowMod;
@@ -33,7 +33,7 @@ public class Slice {
 	
 	public Slice(Controller controller) {
 		this.controller = controller;
-		this.slicelets = new TreeSet<Slicelet>();
+		this.slicelets = new HashSet<Slicelet>();
 		LOGGER.finest("Creating slice for controller " + controller);
 	}
 	

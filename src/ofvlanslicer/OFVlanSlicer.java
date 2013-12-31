@@ -2,7 +2,6 @@ package ofvlanslicer;
 
 import java.util.Set;
 import java.util.TreeSet;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class OFVlanSlicer {
@@ -15,11 +14,15 @@ public class OFVlanSlicer {
 	 */
 	public static void main(String[] args) {
 		SlicerConfig config = new SlicerConfig();
-		
+
 		ControllerConnectionManager controllerManager = new ControllerConnectionManager();
 		DeviceConnectionManager deviceManager = new DeviceConnectionManager(config.getServerListenerPort());
+		Thread deviceManagerListener = new Thread(deviceManager, "Device Manager New Connection Listener");
+		
+		deviceManagerListener.start();
 		
 		Slicer slicer = new Slicer(deviceManager, controllerManager, config);
+		
 		controllerManager.setSlicer(slicer);
 		deviceManager.setSlicer(slicer);
 		
@@ -28,7 +31,7 @@ public class OFVlanSlicer {
 	
 	private static void runUnitTests(Slicer slicer, ControllerConnectionManager controllerManager, DeviceConnectionManager deviceManager) {
 		
-		LOGGER.log(Level.ALL, "Beginning unit test");
+		LOGGER.info("Beginning unit test");
 		
 		Controller controller = new Controller("localhost", 6654);
 		Slice slice = new Slice(controller);
@@ -47,6 +50,12 @@ public class OFVlanSlicer {
 		while (true) {
 			controllerManager.readAll();
 			deviceManager.readAll();
+			try {
+				Thread.sleep(2000);
+			} catch (InterruptedException e) {
+				LOGGER.severe("Couldn't sleep on unit test, so just bail");
+				System.exit(1);
+			}
 		}
 	}
 

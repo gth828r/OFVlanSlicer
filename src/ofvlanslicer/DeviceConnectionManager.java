@@ -9,8 +9,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
 
 import org.openflow.protocol.OFMessage;
+import org.openflow.protocol.factory.BasicFactory;
 
-public class DeviceConnectionManager {
+public class DeviceConnectionManager implements Runnable {
 
 	private static final Logger LOGGER = Logger.getLogger(
 		    Thread.currentThread().getStackTrace()[0].getClassName() );
@@ -31,7 +32,6 @@ public class DeviceConnectionManager {
 		this.serverPort = serverPort;
 		this.connections = new ConcurrentHashMap<ControllableDevice, OFConnection>();
 		this.devices = new ConcurrentHashMap<OFConnection, ControllableDevice>();
-		this.listenForConnections();
 	}
 	
 	public void setSlicer(Slicer slicer) {
@@ -43,6 +43,8 @@ public class DeviceConnectionManager {
 		for (OFConnection connection : devices.keySet()) {
 			List<OFMessage> messages = connection.receive();
 			
+			LOGGER.info("Checking messaged for device connection " + connection.toString());
+			
 			if (messages != null && messages.size() > 0) {
 				ControllableDevice device = devices.get(connection);
 				
@@ -53,6 +55,9 @@ public class DeviceConnectionManager {
 		}
 	}
 	
+	public void run() {
+		listenForConnections();
+	}
 	
 	protected void listenForConnections() {
 		ServerSocketChannel serverSocketChannel;
@@ -68,11 +73,10 @@ public class DeviceConnectionManager {
 					ControllableDevice device = new ControllableDevice(deviceHostname, deviceControlPort);
 					this.createConnection(socket, device);
 				} catch (IOException e) {
-					// TODO Auto-generated catch block
+					LOGGER.finer(e.getMessage());
+					LOGGER.finer(e.getStackTrace().toString());
 					e.printStackTrace();
 				}
-
-			    //do something with socketChannel...
 			}
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
@@ -81,11 +85,9 @@ public class DeviceConnectionManager {
 	}
 	
 	public void createConnection(SocketChannel socket, ControllableDevice device) {
-		//FIXME implement this
-		//OFConnection connection = new OFConnection(socket, new OFMessageFactory());
-		//connections.put(device, connection);
-		//devices.put(connection, device);
-		
+		OFConnection connection = new OFConnection(socket, new BasicFactory());
+		connections.put(device, connection);
+		devices.put(connection, device);
 		LOGGER.info("Creating connection for device " + device);
 	}
 	
