@@ -49,9 +49,8 @@ public class OFVlanSlicer {
 		//FIXME: this is a hack to get things working
 		while (true) {
 			controllerManager.readAll();
-			deviceManager.readAll();
 			try {
-				Thread.sleep(2000);
+				Thread.sleep(500);
 			} catch (InterruptedException e) {
 				LOGGER.severe("Couldn't sleep on unit test, so just bail");
 				System.exit(1);

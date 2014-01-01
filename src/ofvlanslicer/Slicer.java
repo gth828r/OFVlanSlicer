@@ -367,7 +367,7 @@ public class Slicer {
 		switch (ofmessage.getType()) {
 		
 		case PACKET_IN:
-			LOGGER.fine("Got packet-in message from device " + device);
+			LOGGER.info("Got packet-in message from device " + device);
 			//FIXME there is probably a better way to do this instead of casting
 			OFPacketIn pktIn = (OFPacketIn) ofmessage;
 			this.virtualizeAndSendPacketIn(pktIn, device);
@@ -380,8 +380,12 @@ public class Slicer {
 			// Update controller if a given slice has this port in it
 			
 		
-		case ERROR:
 		case FEATURES_REPLY:
+			// slice by XID
+			LOGGER.info("Got packet-in message from device " + device);
+			break;
+			
+		case ERROR:
 		case GET_CONFIG_REPLY:
 			// slice these by XID
 			break;
@@ -403,14 +407,23 @@ public class Slicer {
 		
 		// FIXME:  will need to deal with hello to support 1.1+
 		case HELLO:
+			LOGGER.info("Got HELLO message from device " + device);
+			
 			// Send HELLO back
-			OFConnection helloConnection = deviceConnectionManager.getConnection(device);
-			OFHello hello = new OFHello();
-			helloConnection.send(hello);
+			//OFConnection helloConnection = deviceConnectionManager.getConnection(device);
+			
+			// Ensure that we know about the device already... it is possible that we don't
+			//if (helloConnection != null) {
+			//	OFHello hello = new OFHello();
+			//	helloConnection.send(hello);
+			//}
+			
 			break;
 	
 		// Reply to an echo request from a controller with an echo reply
 		case ECHO_REQUEST:
+			LOGGER.info("Got echo request message from device " + device);
+			
 			OFEchoReply echoReply = new OFEchoReply();
 			OFConnection echoReplyConnection = deviceConnectionManager.getConnection(device);
 			echoReplyConnection.send(echoReply);

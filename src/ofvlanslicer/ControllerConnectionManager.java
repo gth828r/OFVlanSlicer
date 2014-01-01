@@ -28,7 +28,7 @@ public class ControllerConnectionManager {
 	// FIXME: this approach is naive and messy, but get something working for now
 	public void readAll() {
 		for (OFConnection connection : connectionManagerKeys.keySet()) {
-			List<OFMessage> messages = connection.receive();
+			List<OFMessage> messages = connection.read();
 			
 			if (messages != null && messages.size() > 0) {
 				ConnectionManagerKey key = connectionManagerKeys.get(connection);
