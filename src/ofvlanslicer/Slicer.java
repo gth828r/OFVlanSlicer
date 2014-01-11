@@ -44,6 +44,8 @@ public class Slicer {
 	
 	protected SlicerConfig config;
 	
+	protected XidTracker xidTracker;
+	
 	public Slicer(DeviceConnectionManager deviceConnectionManager, ControllerConnectionManager controllerConnectionManager, SlicerConfig config) {
 		this.deviceConnectionManager = deviceConnectionManager;
 		this.controllerConnectionManager = controllerConnectionManager;
@@ -53,6 +55,7 @@ public class Slicer {
 		
 		this.slices = new HashSet<Slice>();
 		this.config = config;
+		this.xidTracker = new XidTracker();
 	}
 	
 	public void addSlice(Slice slice) {
@@ -360,6 +363,15 @@ public class Slicer {
 		}
 	}
 	
+	private void sendToControllerByXid(OFMessage ofmessage, ControllableDevice device) {
+		Slice slice = xidTracker.getSliceByXid(ofmessage.getXid());
+		OFConnection controllerConnection = controllerConnectionManager.getConnection(slice, device);
+		// Map back to controller XID
+		int controllerXid = xidTracker.getControllerXid(ofmessage.getXid());
+		ofmessage.setXid(controllerXid);
+		controllerConnection.send(ofmessage);
+	}
+	
 	
 	public void handlePacketFromSwitch(OFMessage ofmessage, ControllableDevice device) {
 		switch (ofmessage.getType()) {
@@ -377,15 +389,21 @@ public class Slicer {
 		case PORT_STATUS:
 			// Update controller if a given slice has this port in it
 			
+			
 		
 		case FEATURES_REPLY:
-			// slice by XID
-			LOGGER.info("Got packet-in message from device " + device);
+			LOGGER.info("Got Features Reply from device " + device);
+			this.sendToControllerByXid(ofmessage, device);
 			break;
 			
 		case ERROR:
+			LOGGER.info("Got Error from device " + device);
+			this.sendToControllerByXid(ofmessage, device);
+			break;
+			
 		case GET_CONFIG_REPLY:
-			// slice these by XID
+			LOGGER.info("Got Config Reply from device " + device);
+			this.sendToControllerByXid(ofmessage, device);
 			break;
 		
 		case VENDOR:
