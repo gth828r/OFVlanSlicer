@@ -99,7 +99,7 @@ public class DeviceConnectionManager implements Runnable {
 						if (messages != null && messages.size() > 0) {
 							ControllableDevice device = devices.get(connection);
 
-							LOGGER.info("Got messages from device " + device);
+							LOGGER.info("Got " + messages.size() + " messages from device " + device);
 							
 							for (OFMessage message : messages) {
 								slicer.handlePacketFromSwitch(message, device);

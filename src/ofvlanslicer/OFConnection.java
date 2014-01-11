@@ -86,6 +86,7 @@ public class OFConnection {
 		
 		try {
 			if ((numBytes = socket.read(inBuffer)) > 0) {
+				inBuffer.flip();
 				messages = factory.parseMessages(inBuffer, numBytes);
 				inBuffer.clear();
 			}

@@ -8,7 +8,6 @@ import java.util.logging.Logger;
 
 import org.openflow.protocol.OFEchoReply;
 import org.openflow.protocol.OFFlowMod;
-import org.openflow.protocol.OFHello;
 import org.openflow.protocol.OFMessage;
 import org.openflow.protocol.OFPacketIn;
 import org.openflow.protocol.OFPacketOut;
@@ -331,35 +330,32 @@ public class Slicer {
 		
 		Slice slice = this.getSliceFromVlanOnDevice(this.getVlanId(frame), device);
 		
-		//FIXME: this is just temporary to get rid of warning
-		slice.equals(null);
-		
-		Slicelet slicelet = slice.getSlicelet(device, pktIn.getInPort(), frame);
-		
-		// Ensure that this slice includes a slicelet with this in port before sending along
-		if (slicelet != null) {
-			EthernetFrame newFrame = this.virtualizePacketIn(frame, slicelet);
-			OFPacketIn newPktIn = pktIn;
-			try {
-				newPktIn.setPacketData(newFrame.getRawBytes());
-			} catch (NetUtilsException e) {
-				// I don't know what can happen here, so log it as a warning
-				LOGGER.warning(e.getMessage());
-			}
+		if (slice != null) {
+			Slicelet slicelet = slice.getSlicelet(device, pktIn.getInPort(), frame);
 			
-			// send newPacketOut to device 
-			OFConnection connection = controllerConnectionManager.getConnection(slice, device);
-			connection.send(newPktIn);
+			// Ensure that this slice includes a slicelet with this in port before sending along
+			if (slicelet != null) {
+				EthernetFrame newFrame = this.virtualizePacketIn(frame, slicelet);
+				OFPacketIn newPktIn = pktIn;
+				try {
+					newPktIn.setPacketData(newFrame.getRawBytes());
+				} catch (NetUtilsException e) {
+					// I don't know what can happen here, so log it as a warning
+					LOGGER.warning(e.getMessage());
+				}
+				
+				// send newPacketOut to device 
+				OFConnection connection = controllerConnectionManager.getConnection(slice, device);
+				connection.send(newPktIn);
+			} else {
+				int vlanId = this.getVlanId(frame);
+				LOGGER.warning("Frame has VLAN ID " + vlanId + " on port " + pktIn.getInPort() + ", but slice doesn't include that VLAN on that port."); 
+			}			
 		} else {
 			int vlanId = this.getVlanId(frame);
-			LOGGER.warning("Frame has VLAN ID " + vlanId + " on port " + pktIn.getInPort() + ", but slice doesn't include that VLAN on that port."); 
+			LOGGER.warning("Frame has VLAN ID " + vlanId + " on port " + pktIn.getInPort() + ", but slice doesn't include that VLAN on that port.");
+			return;
 		}
-		
-		// Modify packet for controller
-		
-		// Create new packet in from new packet
-		
-		// Send packet to controller
 	}
 	
 	
@@ -436,11 +432,16 @@ public class Slicer {
 	}
 	
 	private int getVlanId(EthernetFrame frame) {
+		
 		// FIXME better error handling here
 		try {
-			byte[] vlanIdBytes = EthernetFrame.statGetVlan(frame.getRawBytes());
-			int vlanId = (vlanIdBytes[1] << 8) | (vlanIdBytes[0]);
-			return vlanId; 
+			if (EthernetFrame.statIsVlan(frame.getRawBytes())) {
+				byte[] vlanIdBytes = EthernetFrame.statGetVlan(frame.getRawBytes());
+				int vlanId = (vlanIdBytes[1] << 8) | (vlanIdBytes[0]);
+				return vlanId;
+			} else {
+				return -4;
+			}
 		} catch (NetUtilsException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
