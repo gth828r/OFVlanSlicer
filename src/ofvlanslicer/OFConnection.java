@@ -8,8 +8,6 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import org.openflow.protocol.OFFeaturesRequest;
-import org.openflow.protocol.OFHello;
 import org.openflow.protocol.OFMessage;
 import org.openflow.protocol.factory.OFMessageFactory;
 
@@ -55,11 +53,6 @@ public class OFConnection {
 		this.inBuffer = ByteBuffer.allocate(65536);
 		this.factory = factory;
 		this.socket = socket;
-		
-		// Switch initiates TCP session, but controller is responsible
-		// For sending a features request to kick off the handshake
-		this.send(new OFHello());
-		this.send(new OFFeaturesRequest());
 	}
 	
 	public void send(OFMessage message) {

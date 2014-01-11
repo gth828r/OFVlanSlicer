@@ -7,7 +7,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
 
 import org.openflow.protocol.OFEchoReply;
+import org.openflow.protocol.OFFeaturesRequest;
 import org.openflow.protocol.OFFlowMod;
+import org.openflow.protocol.OFHello;
 import org.openflow.protocol.OFMessage;
 import org.openflow.protocol.OFPacketIn;
 import org.openflow.protocol.OFPacketOut;
@@ -406,13 +408,22 @@ public class Slicer {
 			LOGGER.info("Got HELLO message from device " + device);
 			
 			// Send HELLO back
-			//OFConnection helloConnection = deviceConnectionManager.getConnection(device);
+			OFConnection helloConnection = deviceConnectionManager.getConnection(device);
 			
-			// Ensure that we know about the device already... it is possible that we don't
-			//if (helloConnection != null) {
-			//	OFHello hello = new OFHello();
-			//	helloConnection.send(hello);
-			//}
+			byte version = ofmessage.getVersion();
+			
+			if (version > 1) {
+				LOGGER.warning("Only OF version 1.0 (0x01) is supported, but got " + version);
+			} else {
+			
+				// Ensure that we know about the device already... it is possible that we don't
+				if (helloConnection != null) {
+					OFHello hello = new OFHello();
+					hello.setXid(ofmessage.getXid());
+					helloConnection.send(hello);
+					helloConnection.send(new OFFeaturesRequest());
+				}
+			}
 			
 			break;
 	
@@ -421,6 +432,7 @@ public class Slicer {
 			LOGGER.info("Got echo request message from device " + device);
 			
 			OFEchoReply echoReply = new OFEchoReply();
+			echoReply.setXid(ofmessage.getXid());
 			OFConnection echoReplyConnection = deviceConnectionManager.getConnection(device);
 			echoReplyConnection.send(echoReply);
 			
