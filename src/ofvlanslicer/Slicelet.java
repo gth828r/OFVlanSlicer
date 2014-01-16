@@ -4,6 +4,7 @@ import java.util.Set;
 import java.util.logging.Logger;
 
 import org.openflow.protocol.OFFlowMod;
+import org.openflow.protocol.OFFlowRemoved;
 
 import edu.huji.cs.netutils.parse.EthernetFrame;
 
@@ -59,6 +60,16 @@ public class Slicelet {
 		// FIXME this needs to check ports in the flowmod against ports in the port set
 		if (this.device.equals(device)) {
 			if (virtualizer.matches(flowmod)) {
+				return true;
+			}
+		}
+		
+		return false;
+	}
+	
+	public boolean matches(ControllableDevice device, OFFlowRemoved flowRemoved) {
+		if (this.device.equals(device)) {
+			if (virtualizer.matches(flowRemoved)) {
 				return true;
 			}
 		}

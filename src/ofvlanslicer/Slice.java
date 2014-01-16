@@ -4,6 +4,7 @@ import java.util.Set;
 import java.util.logging.Logger;
 
 import org.openflow.protocol.OFFlowMod;
+import org.openflow.protocol.OFFlowRemoved;
 
 import edu.huji.cs.netutils.parse.EthernetFrame;
 
@@ -60,6 +61,16 @@ public class Slice {
 	protected Slicelet getSlicelet(ControllableDevice device, OFFlowMod flowmod) {
 		for (Slicelet slicelet : slicelets) {
 			if (slicelet.matches(device, flowmod)) {
+				return slicelet;
+			}
+		}
+		
+		return null;
+	}
+	
+	protected Slicelet getSlicelet(ControllableDevice device, OFFlowRemoved flowRemoved) {
+		for (Slicelet slicelet : slicelets) {
+			if (slicelet.matches(device, flowRemoved)) {
 				return slicelet;
 			}
 		}

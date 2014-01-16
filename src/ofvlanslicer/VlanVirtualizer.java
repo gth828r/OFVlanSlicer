@@ -4,6 +4,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.openflow.protocol.OFFlowMod;
+import org.openflow.protocol.OFFlowRemoved;
 import org.openflow.protocol.OFMatch;
 
 import edu.huji.cs.netutils.NetUtilsException;
@@ -80,22 +81,42 @@ public class VlanVirtualizer  {
 
 	public boolean matches(OFFlowMod flowmod) {
 		if (this.contains(flowmod)) {
-			OFMatch match = flowmod.getMatch();
-			if (match.getDataLayerVirtualLan() == vlanId) {
-				return true;
-			}
+			return this.matches(flowmod.getMatch());
 		}
 		
 		return false;
 	}
-
-	public boolean contains(OFFlowMod flowmod) {
-		OFMatch match = flowmod.getMatch();
-		if ((match.getWildcards() & OFMatch.OFPFW_DL_VLAN) != OFMatch.OFPFW_DL_VLAN) {
-			return true;
-		}		 
+	
+	public boolean matches(OFFlowRemoved flowRemoved) {
+		if (this.contains(flowRemoved)) {
+			return this.matches(flowRemoved.getMatch());
+		}
 		
 		return false;
+	}
+	
+	public boolean matches(OFMatch match) {
+		if (match.getDataLayerVirtualLan() == vlanId) {
+			return true;
+		} else {
+			return false;
+		}
+	}
+
+	public boolean contains(OFFlowMod flowmod) {
+		return this.contains(flowmod.getMatch());
+	}
+	
+	public boolean contains(OFFlowRemoved flowRemoved) {
+		return this.contains(flowRemoved.getMatch());
+	}
+	
+	public boolean contains(OFMatch match) {
+		if ((match.getWildcards() & OFMatch.OFPFW_DL_VLAN) != OFMatch.OFPFW_DL_VLAN) {
+			return true;
+		} else {
+			return false;
+		}
 	}
 
 	public OFFlowMod insert(OFFlowMod flowmod) {
@@ -113,6 +134,22 @@ public class VlanVirtualizer  {
 		newFlowmod = flowmod.setMatch(newMatch);
 		
 		return newFlowmod;
+	}
+	
+	public OFFlowRemoved insert(OFFlowRemoved flowRemoved) {
+		OFMatch match = flowRemoved.getMatch();
+		OFMatch newMatch;
+		
+		// Set the VLAN ID
+		newMatch = match.setDataLayerVirtualLan(vlanId);
+		
+		// Set the wildcard bits
+		newMatch = newMatch.setWildcards(match.getWildcards() | OFMatch.OFPFW_DL_VLAN);
+		
+		// Update the flowRemoved
+		flowRemoved.setMatch(newMatch);
+		
+		return flowRemoved;
 	}
 
 	public OFFlowMod delete(OFFlowMod flowmod) {
@@ -132,6 +169,23 @@ public class VlanVirtualizer  {
 		
 		return newFlowmod;
 	}
+	
+	public OFFlowRemoved delete(OFFlowRemoved flowRemoved) {
+		OFMatch match = flowRemoved.getMatch();
+		OFMatch newMatch;
+		
+		// Set the VLAN ID to 0
+		// FIXME: make sure 0 is the right number to use here
+		newMatch = match.setDataLayerVirtualLan((short) 0);
+		
+		// Set the wildcard bits
+		newMatch = newMatch.setWildcards(match.getWildcards() & (~OFMatch.OFPFW_DL_VLAN));
+		
+		// Update the flowmod
+		flowRemoved.setMatch(newMatch);
+		
+		return flowRemoved;
+	}
 
 	public OFFlowMod replace(OFFlowMod flowmod) {
 		// Delete and insert
@@ -139,6 +193,14 @@ public class VlanVirtualizer  {
 		newFlowmod = this.insert(newFlowmod);
 		
 		return newFlowmod;
+	}
+	
+	public OFFlowRemoved replace(OFFlowRemoved flowRemoved) {
+		// Delete and insert
+		OFFlowRemoved newFlowRemoved = this.delete(flowRemoved);
+		newFlowRemoved = this.insert(newFlowRemoved);
+		
+		return newFlowRemoved;
 	}
 	
 	public short getVlanId() {

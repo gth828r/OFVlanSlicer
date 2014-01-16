@@ -9,6 +9,7 @@ import java.util.logging.Logger;
 import org.openflow.protocol.OFEchoReply;
 import org.openflow.protocol.OFFeaturesRequest;
 import org.openflow.protocol.OFFlowMod;
+import org.openflow.protocol.OFFlowRemoved;
 import org.openflow.protocol.OFHello;
 import org.openflow.protocol.OFMessage;
 import org.openflow.protocol.OFPacketIn;
@@ -165,12 +166,37 @@ public class Slicer {
 		
 		return newFlowmod;
 	}
+	
+	public OFFlowRemoved virtualizeFlowRemoved(OFFlowRemoved flowRemoved, Slicelet slicelet) {
+		OFFlowRemoved newFlowRemoved = flowRemoved;
+			
+		// get discriminant for slice/device (we store this)
+		VlanVirtualizer virtualizer = slicelet.getVlanVirtualizer();
+
+		if (!virtualizer.contains(flowRemoved)) {
+			newFlowRemoved = virtualizer.delete(flowRemoved);
+		}
+		
+		return newFlowRemoved;
+	}
 
 	public boolean verifyFlowmod(OFFlowMod flowmod, Slicelet slicelet) {
 		VlanVirtualizer virtualizer = slicelet.getVlanVirtualizer();
 		
 		if (virtualizer.contains(flowmod)) {
 			if (!virtualizer.matches(flowmod)) {
+				return false;
+			}
+		}
+		
+		return true;
+	}
+	
+	public boolean verifyFlowRemoved(OFFlowRemoved flowRemoved, Slicelet slicelet) {
+		VlanVirtualizer virtualizer = slicelet.getVlanVirtualizer();
+		
+		if (virtualizer.contains(flowRemoved)) {
+			if (!virtualizer.matches(flowRemoved)) {
 				return false;
 			}
 		}
@@ -230,6 +256,29 @@ public class Slicer {
 			//FIXME: log error
 		}
 	}
+	
+	private void virtualizeAndSendFlowRemoved(OFFlowRemoved flowRemoved, ControllableDevice device) {
+		
+		int vlanId = flowRemoved.getMatch().getDataLayerVirtualLan();
+		
+		Slice mySlice = this.getSliceFromVlanOnDevice(vlanId, device);
+		Slicelet slicelet;
+		
+		slicelet = mySlice.getSlicelet(device, flowRemoved);
+		
+		if (this.verifyFlowRemoved(flowRemoved, slicelet)) {
+			// virtualize FlowRemoved
+			OFFlowRemoved newFlowRemoved = this.virtualizeFlowRemoved(flowRemoved, slicelet);
+			
+			// send newFlowmod to device 
+			OFConnection connection = deviceConnectionManager.getConnection(slicelet.getDevice());
+			connection.send(newFlowRemoved);
+		} else {
+			//FIXME: log error
+		}
+	}
+	
+	
 	
 	private void virtualizeAndSendPacketOut(OFPacketOut pktOut, Controller controller, ControllableDevice device) {
 		Slice mySlice = this.getSliceFromController(controller);
@@ -385,6 +434,9 @@ public class Slicer {
 			
 		case FLOW_REMOVED:
 			// Slice by match space
+			LOGGER.info("Got flow-removed message from device " + device);
+			OFFlowRemoved flowRemoved = (OFFlowRemoved) ofmessage;
+			this.virtualizeAndSendFlowRemoved(flowRemoved, device);
 			
 		case PORT_STATUS:
 			// Update controller if a given slice has this port in it

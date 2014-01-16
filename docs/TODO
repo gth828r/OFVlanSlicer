@@ -1,1 +1,5 @@
 XID must be mapped from controller to slicer namespace
+
+Core of code should probably just pass OF messages, and VlanVirtualizer can decide what to do with each message
+  * Decrease code duplication for different kinds of OF messages
+  * Limit usage of external libraries to less classes
