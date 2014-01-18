@@ -20,3 +20,5 @@ Slice object should be able to look up which VLANs are on which devices in the s
 
 Slicelet = VLAN on device + ports
 VLAN on device can only belong to one slice
+
+Integrate all classes with SlicerConfig

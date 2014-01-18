@@ -2,6 +2,7 @@ package ofvlanslicer;
 
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class OFVlanSlicer {
@@ -9,11 +10,19 @@ public class OFVlanSlicer {
 	private static final Logger LOGGER = Logger.getLogger(
 		    Thread.currentThread().getStackTrace()[0].getClassName() );
 	
+	private static final boolean TESTING = true;
+	
 	/**
 	 * @param args
 	 */
 	public static void main(String[] args) {
 		SlicerConfig config = new SlicerConfig();
+		
+		if (TESTING) {
+			config.setLogLevel(Level.FINEST);
+		}
+		
+		LOGGER.setLevel(config.getLogLevel());
 
 		ControllerConnectionManager controllerManager = new ControllerConnectionManager();
 		DeviceConnectionManager deviceManager = new DeviceConnectionManager(config.getServerListenerPort());

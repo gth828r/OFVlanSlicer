@@ -58,6 +58,8 @@ public class Slicer {
 		this.slices = new HashSet<Slice>();
 		this.config = config;
 		this.xidTracker = new XidTracker();
+		
+		LOGGER.setLevel(config.getLogLevel());
 	}
 	
 	/**
@@ -337,7 +339,8 @@ public class Slicer {
 			
 		case FEATURES_REQUEST:
 			LOGGER.fine("Got features request message from controller " + controller);
-			this.sendToDevice(ofmessage, controller, device);
+			// Send cached response
+			//this.sendToDevice(ofmessage, controller, device);
 			break;
 			
 		case GET_CONFIG_REQUEST:
@@ -477,7 +480,8 @@ public class Slicer {
 		
 		case FEATURES_REPLY:
 			LOGGER.fine("Got Features Reply from device " + device);
-			this.sendToControllerByXid(ofmessage, device);
+			// Store data locally
+			// this.sendToControllerByXid(ofmessage, device);
 			break;
 			
 		case ERROR:

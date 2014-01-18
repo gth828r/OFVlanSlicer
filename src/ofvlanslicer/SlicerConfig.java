@@ -41,6 +41,10 @@ public class SlicerConfig {
 		return this.logLevel;
 	}
 	
+	public void setLogLevel(Level level) {
+		this.logLevel = level;
+	}
+	
 	public short getServerListenerPort() {
 		return this.serverListenerPort;
 	}
