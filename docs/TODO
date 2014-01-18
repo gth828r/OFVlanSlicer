@@ -1,5 +1,14 @@
 XID must be mapped from controller to slicer namespace
 
+XID mapping should be logged for debugging purposes, but must have reasonable log rotation mechanism
+
 Core of code should probably just pass OF messages, and VlanVirtualizer can decide what to do with each message
   * Decrease code duplication for different kinds of OF messages
   * Limit usage of external libraries to less classes
+  
+Comment EVERYTHING
+
+Actually fix FIXMEs
+
+Add heartbeat code (generate echo requests)
+

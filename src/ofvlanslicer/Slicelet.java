@@ -93,4 +93,5 @@ public class Slicelet {
 	public ControllableDevice getDevice() {
 		return this.device;
 	}
+	
 }

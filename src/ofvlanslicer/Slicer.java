@@ -14,6 +14,7 @@ import org.openflow.protocol.OFHello;
 import org.openflow.protocol.OFMessage;
 import org.openflow.protocol.OFPacketIn;
 import org.openflow.protocol.OFPacketOut;
+import org.openflow.protocol.OFPortStatus;
 import org.openflow.protocol.action.OFAction;
 import org.openflow.protocol.action.OFActionOutput;
 import org.openflow.protocol.action.OFActionType;
@@ -324,12 +325,16 @@ public class Slicer {
 		
 		switch (ofmessage.getType()) {
 		case FLOW_MOD:
+			LOGGER.fine("Got flowmod message from controller " + controller);
+			
 			//FIXME there is probably a better way to do this instead of casting
 			OFFlowMod flowmod = (OFFlowMod) ofmessage;
 			this.virtualizeAndSendFlowmod(flowmod, controller, device);
 			break;
 			
 		case PACKET_OUT:
+			LOGGER.fine("Got packet-out message from controller " + controller);
+			
 			//FIXME there is probably a better way to do this instead of casting
 			OFPacketOut pktOut = (OFPacketOut) ofmessage;
 			this.virtualizeAndSendPacketOut(pktOut, controller, device);
@@ -337,15 +342,28 @@ public class Slicer {
 						
 		// Pass all of these messages along without modification
 		case STATS_REQUEST:
+			LOGGER.fine("Got stats request message from controller " + controller);
+			break;
+			
 		case FEATURES_REQUEST:
+			LOGGER.fine("Got features request message from controller " + controller);
+			break;
+			
 		case GET_CONFIG_REQUEST:
+			LOGGER.fine("Got config request message from controller " + controller);
+			break;
+			
 		case BARRIER_REQUEST:
+			LOGGER.fine("Got barrier request message from controller " + controller);
+			
 			// hope that controllers don't use the same xid to the same device at the same time		
 			OFConnection deviceConnection = deviceConnectionManager.getConnection(device);
 			deviceConnection.send(ofmessage);
 			break;
 			
 		case VENDOR:
+			LOGGER.fine("Got vendor message from controller " + controller);
+			
 			if (config.getUnknownMsgStrict()) {
 				LOGGER.warning("Vendor messages are not suppoted when UNKNOWN_MSG_STRICT is enabled");
 			} else {
@@ -357,14 +375,19 @@ public class Slicer {
 			
 		// Ignore these for now
 		case ECHO_REPLY:
+			LOGGER.fine("Got echo reply message from controller " + controller);
+			
 			break;
 			
 		// FIXME:  will need to deal with hello to support 1.1+
 		case HELLO:
+			LOGGER.fine("Got hello message from controller " + controller);
 			break;
 		
 		// Reply to an echo request from a controller with an echo reply
 		case ECHO_REQUEST:
+			LOGGER.fine("Got echo request message from controller " + controller);
+			
 			// FIXME: get the correct connection
 			Slice echoRequestSlice = this.getSliceFromController(controller);
 			OFEchoReply echoReply = new OFEchoReply();
@@ -374,7 +397,7 @@ public class Slicer {
 		
 		default:
 			// I don't know how to process this message in this context, log and drop
-	
+			LOGGER.fine("Got unknown message type from controller " + controller);
 		}
 	}
 	
@@ -426,7 +449,7 @@ public class Slicer {
 		switch (ofmessage.getType()) {
 		
 		case PACKET_IN:
-			LOGGER.info("Got packet-in message from device " + device);
+			LOGGER.fine("Got packet-in message from device " + device);
 			//FIXME there is probably a better way to do this instead of casting
 			OFPacketIn pktIn = (OFPacketIn) ofmessage;
 			this.virtualizeAndSendPacketIn(pktIn, device);
@@ -434,31 +457,50 @@ public class Slicer {
 			
 		case FLOW_REMOVED:
 			// Slice by match space
-			LOGGER.info("Got flow-removed message from device " + device);
+			LOGGER.fine("Got flow-removed message from device " + device);
 			OFFlowRemoved flowRemoved = (OFFlowRemoved) ofmessage;
 			this.virtualizeAndSendFlowRemoved(flowRemoved, device);
 			
 		case PORT_STATUS:
 			// Update controller if a given slice has this port in it
+			LOGGER.fine("Got flow-removed message from device " + device);
+			OFPortStatus portStatus = (OFPortStatus) ofmessage;
 			
+			short port = portStatus.getDesc().getPortNumber();
+			Set<Slice> affectedSlices = new HashSet<Slice>();
 			
+			//find affected slices
+			for (Slice slice : slices) {
+				if (slice.containsPort(device, port)) {
+					affectedSlices.add(slice);
+				}
+			}
+			
+			// forward message to all affected slices
+			for (Slice slice : affectedSlices) {
+				OFConnection portStatusConnection = controllerConnectionManager.getConnection(slice, device);
+				portStatusConnection.send(ofmessage);
+			}
+			
+			break;
 		
 		case FEATURES_REPLY:
-			LOGGER.info("Got Features Reply from device " + device);
+			LOGGER.fine("Got Features Reply from device " + device);
 			this.sendToControllerByXid(ofmessage, device);
 			break;
 			
 		case ERROR:
-			LOGGER.info("Got Error from device " + device);
+			LOGGER.fine("Got Error from device " + device);
 			this.sendToControllerByXid(ofmessage, device);
 			break;
 			
 		case GET_CONFIG_REPLY:
-			LOGGER.info("Got Config Reply from device " + device);
+			LOGGER.fine("Got Config Reply from device " + device);
 			this.sendToControllerByXid(ofmessage, device);
 			break;
 		
 		case VENDOR:
+			LOGGER.fine("Got vendor message from device " + device);
 			if (config.getUnknownMsgStrict()) {
 				LOGGER.warning("Vendor messages are not suppoted when UNKNOWN_MSG_STRICT is enabled");
 			} else {
@@ -471,11 +513,12 @@ public class Slicer {
 		
 		// Ignore these for now
 		case ECHO_REPLY:
+			LOGGER.fine("Got echo reply message from device " + device);
 			break;
 		
 		// FIXME:  will need to deal with hello to support 1.1+
 		case HELLO:
-			LOGGER.info("Got HELLO message from device " + device);
+			LOGGER.fine("Got HELLO message from device " + device);
 			
 			// Send HELLO back
 			OFConnection helloConnection = deviceConnectionManager.getConnection(device);
@@ -499,7 +542,7 @@ public class Slicer {
 	
 		// Reply to an echo request from a controller with an echo reply
 		case ECHO_REQUEST:
-			LOGGER.info("Got echo request message from device " + device);
+			LOGGER.fine("Got echo request message from device " + device);
 			
 			OFEchoReply echoReply = new OFEchoReply();
 			echoReply.setXid(ofmessage.getXid());
@@ -510,6 +553,7 @@ public class Slicer {
 	
 		default:
 			// I don't know how to process this message in this context, log and drop
+			LOGGER.fine("Got unknown message type from device " + device);
 		}
 	}
 	

@@ -89,4 +89,19 @@ public class Slice {
 	public Set<Slicelet> getSlicelets() {
 		return this.slicelets;
 	}
+	
+	/**
+	 * Check whether or not a slice includes a given controllable device port
+	 * @param port controllable port to check for within slicelet
+	 * @return whether or not the slicelet contains the port
+	 */
+	protected boolean containsPort(ControllableDevice device, Short port) {
+		for (Slicelet slicelet : this.slicelets) {
+			if (slicelet.containsPort(device, port)) {
+				return true;
+			}
+		}
+
+		return false;
+	}
 }
