@@ -15,7 +15,7 @@ public class ControllableDevice {
 	
 	protected int controlPort;
 	
-	//FIXME: does this need to be thread safe?
+	//FIXME: this needs to be thread safe
 	protected Set<Short> ports;
 	
 	public ControllableDevice(String hostname, int controlPort) {

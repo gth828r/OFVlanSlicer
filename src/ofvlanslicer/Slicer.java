@@ -205,41 +205,6 @@ public class Slicer {
 		return true;
 	}
 	
-	public void handlePacketFromControllableDevice(OFMessage ofmessage, ControllableDevice device) {
-		switch (ofmessage.getType()) {
-		case FLOW_REMOVED:
-			
-			break;
-			
-		case PACKET_IN:
-			
-			break;
-	
-		case STATS_REPLY:
-			
-			break;
-			
-		/* Pass all of these messages along without modification */
-		case FEATURES_REPLY:
-		case GET_CONFIG_REPLY:
-		case BARRIER_REPLY:	
-		case VENDOR:
-		case ERROR:
-		case PORT_STATUS:
-			
-			break;
-		
-		/* Locally deal with these messages */
-		case HELLO:	
-		case ECHO_REQUEST:
-		case ECHO_REPLY:
-			
-		default:
-			// I don't know how to process this message in this context, log and drop
-	
-		}
-	}
-	
 	private void virtualizeAndSendFlowmod(OFFlowMod flowmod, Controller controller, ControllableDevice device) {
 		Slice mySlice = this.getSliceFromController(controller);
 		Slicelet slicelet;
@@ -319,6 +284,20 @@ public class Slicer {
 		}
 	}
 	
+	public void sendToDevice(OFMessage ofmessage, Controller controller, ControllableDevice device) {
+		OFConnection deviceConnection = deviceConnectionManager.getConnection(device);
+		Slice slice = this.getSliceFromController(controller);
+		int slicerXid = 0;
+		
+		if (ofmessage.getXid() != 0) {
+			slicerXid = xidTracker.reserveSlicerXidFromControllerXid(slice, ofmessage.getXid());
+		}
+		
+		ofmessage.setXid(slicerXid);
+		
+		deviceConnection.send(ofmessage);
+	}
+	
 	public void handlePacketFromController(OFMessage ofmessage, Controller controller, ControllableDevice device) {
 
 		// FIXME: this code currently assumes only 1.0 is supported
@@ -343,22 +322,22 @@ public class Slicer {
 		// Pass all of these messages along without modification
 		case STATS_REQUEST:
 			LOGGER.fine("Got stats request message from controller " + controller);
+			this.sendToDevice(ofmessage, controller, device);
 			break;
 			
 		case FEATURES_REQUEST:
 			LOGGER.fine("Got features request message from controller " + controller);
+			this.sendToDevice(ofmessage, controller, device);
 			break;
 			
 		case GET_CONFIG_REQUEST:
 			LOGGER.fine("Got config request message from controller " + controller);
+			this.sendToDevice(ofmessage, controller, device);
 			break;
 			
 		case BARRIER_REQUEST:
 			LOGGER.fine("Got barrier request message from controller " + controller);
-			
-			// hope that controllers don't use the same xid to the same device at the same time		
-			OFConnection deviceConnection = deviceConnectionManager.getConnection(device);
-			deviceConnection.send(ofmessage);
+			this.sendToDevice(ofmessage, controller, device);
 			break;
 			
 		case VENDOR:
@@ -367,8 +346,7 @@ public class Slicer {
 			if (config.getUnknownMsgStrict()) {
 				LOGGER.warning("Vendor messages are not suppoted when UNKNOWN_MSG_STRICT is enabled");
 			} else {
-				OFConnection vendorDeviceConnection = deviceConnectionManager.getConnection(device);
-				vendorDeviceConnection.send(ofmessage);
+				this.sendToDevice(ofmessage, controller, device);
 			}
 			
 			break;
@@ -376,7 +354,6 @@ public class Slicer {
 		// Ignore these for now
 		case ECHO_REPLY:
 			LOGGER.fine("Got echo reply message from controller " + controller);
-			
 			break;
 			
 		// FIXME:  will need to deal with hello to support 1.1+
@@ -436,11 +413,15 @@ public class Slicer {
 	}
 	
 	private void sendToControllerByXid(OFMessage ofmessage, ControllableDevice device) {
-		Slice slice = xidTracker.getSliceByXid(ofmessage.getXid());
+		Slice slice = xidTracker.getSliceBySlicerXid(ofmessage.getXid());
 		OFConnection controllerConnection = controllerConnectionManager.getConnection(slice, device);
+		
 		// Map back to controller XID
-		int controllerXid = xidTracker.getControllerXid(ofmessage.getXid());
+		int controllerXid = xidTracker.getControllerXidMapping(ofmessage.getXid());
+		xidTracker.releaseControllerXidMapping(ofmessage.getXid());
 		ofmessage.setXid(controllerXid);
+		
+		// Send message
 		controllerConnection.send(ofmessage);
 	}
 	

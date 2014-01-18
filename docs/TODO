@@ -12,3 +12,8 @@ Actually fix FIXMEs
 
 Add heartbeat code (generate echo requests)
 
+Ensure that synchronization code actually works (it probably doesn't but that isn't current focus)
+
+Slice actions on packet-out and flowmod from controller
+
+per device device-to-slicer XID map (not critical at this time)
