@@ -29,6 +29,8 @@ public class Slice {
 	
 	protected Set<ControllableDevice> devices;
 	
+	protected Set<VlanOnDevice> vlansOnDevices;
+	
 	//has a flow count
 	protected int flowCount;
 	

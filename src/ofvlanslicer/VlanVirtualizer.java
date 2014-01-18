@@ -6,6 +6,9 @@ import java.util.logging.Logger;
 import org.openflow.protocol.OFFlowMod;
 import org.openflow.protocol.OFFlowRemoved;
 import org.openflow.protocol.OFMatch;
+import org.openflow.protocol.action.OFAction;
+import org.openflow.protocol.action.OFActionType;
+import org.openflow.protocol.action.OFActionVirtualLanIdentifier;
 
 import edu.huji.cs.netutils.NetUtilsException;
 import edu.huji.cs.netutils.parse.EthernetFrame;
@@ -100,6 +103,29 @@ public class VlanVirtualizer  {
 			return true;
 		} else {
 			return false;
+		}
+	}
+	
+	/**
+	 * Verify that the action results in the packet staying within
+	 * the same VLAN
+	 * @param action
+	 * @return
+	 */
+	public boolean staysWithinVlan(OFAction action) {
+		// The user can set the VLAN ID to be the same VLAN
+		if (action.getType() == OFActionType.SET_VLAN_VID) {
+			OFActionVirtualLanIdentifier svidAction = (OFActionVirtualLanIdentifier) action;
+			if (svidAction.getVirtualLanIdentifier() == this.getVlanId()) {
+				return true;
+			} else {
+				return false;
+			}
+		} else if (action.getType() == OFActionType.STRIP_VLAN) {
+			// Don't allow user to strip VLAN tag
+			return false;
+		} else {
+			return true;
 		}
 	}
 

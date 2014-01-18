@@ -60,6 +60,10 @@ public class Slicer {
 		this.xidTracker = new XidTracker();
 	}
 	
+	/**
+	 * Add a slice to this slicer
+	 * @param slice slice to add
+	 */
 	public void addSlice(Slice slice) {
 		controllerToSlice.put(slice.getController(), slice);
 		
@@ -80,6 +84,12 @@ public class Slicer {
 		return controllerToSlice.get(controller);
 	}
 	
+	/**
+	 * Get a slice based on the VLAN on a device
+	 * @param vlanId VLAN ID to check
+	 * @param device device to check
+	 * @return Slice that is associated with this VLAN on a device
+	 */
 	public Slice getSliceFromVlanOnDevice(int vlanId, ControllableDevice device) {
 		return vlanOnDeviceToSlice.get(new VlanOnDevice(vlanId, device));
 	}
@@ -90,7 +100,10 @@ public class Slicer {
 
 		if (!virtualizer.contains(frame)) {
 			try {
+				// virtualize packet that is being sent
 				newFrame = virtualizer.insert(frame);
+				
+				// FIXME: virtualize actions, if any
 			} catch (VirtualizationException e) {
 				// Could not virtualize packet for some reason
 				// log and continue
@@ -118,16 +131,9 @@ public class Slicer {
 		return newFrame;
 	}
 
-	public Slicelet getSliceletFromPacket(EthernetFrame frame, ControllableDevice device, short port) {
-		
-		//int vlanId = this.getVlanId(frame);
-		
-		// FIXME this is dependent on the device port and the device as well
-		
-		return null;
-	}
-
 	public boolean verifyPacketOut(EthernetFrame frame, Slicelet slicelet) {
+		// FIXME also verify actions, if any
+		
 		VlanVirtualizer virtualizer = slicelet.getVlanVirtualizer();
 		
 		if (!virtualizer.contains(frame)) {
@@ -165,6 +171,8 @@ public class Slicer {
 			newFlowmod = virtualizer.insert(flowmod);
 		}
 		
+		// FIXME virtualize actions as well
+		
 		return newFlowmod;
 	}
 	
@@ -182,6 +190,8 @@ public class Slicer {
 	}
 
 	public boolean verifyFlowmod(OFFlowMod flowmod, Slicelet slicelet) {
+		// FIXME verify actions as well
+		
 		VlanVirtualizer virtualizer = slicelet.getVlanVirtualizer();
 		
 		if (virtualizer.contains(flowmod)) {
